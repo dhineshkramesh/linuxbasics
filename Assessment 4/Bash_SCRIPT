@@ -1,0 +1,20 @@
+ 
+#!/bin/bash
+
+INPUT="input.txt"
+OUTPUT="output.txt"
+
+#Clear output.txt
+
+> "$OUTPUT"
+
+while IFS= read line; do
+        if echo "$line" | grep -q "frame.time"; then
+        echo "$line" > "OUTPUT"
+        elif echo "$line" | grep -q "wlan.fc.type";then
+        echo "$line" > "$OUTPUT"
+        elif echo "$line" | grep -q "wlan.fc.subtype";then
+        echo "$line" > "$OUTPUT"
+fi
+done < "$INPUT"
+echo "COMPLETED!!"
