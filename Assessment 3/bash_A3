@@ -1,0 +1,59 @@
+#!/bin/bash
+
+SOURCE="$1"
+BACKUP="$2"
+EXT="$3"
+
+#Check for 3 arguments
+if [ "$#" -ne 3 ];then
+        echo "Enter 3 Arguments--- <source> <backup> <ext>"
+        exit 0
+fi
+
+#Check if Source folder Exists
+if [ ! -d "$SOURCE" ];then
+        echo "Source folder is missing!!"
+        exit 0
+fi
+
+#check if Backup folder exists
+if [ ! -d "$BACKUP" ];then
+        echo "Backup Dir missing so created one!!"
+        mkdir -p "$BACKUP"
+fi
+
+#store matching extns
+files=("$SOURCE"/*"$EXT")
+
+#CHECK FOR FILES
+if [ ! -e "${files[0]}" ]; then
+        echo "No files with specified extension"
+        exit 0
+fi
+
+export BACKUP_COUNT=0
+FILE_SIZE=0
+
+echo "Files to be BACKUP:"
+
+for file in "${files[@]}"
+do 
+        name=$(basename "$file")
+        size=$(stat -c %s "$file")
+echo "$name --- $size bytes"
+
+dest="$BACKUP/$name"
+
+#if file not in dest or file is newerthan dest_file
+if [ ! -f "$dest" ] || [ "$file" -nt "dest" ];
+then
+        cp "$file" "$BACKUP"
+        let BACKUP_COUNT=($BACKUP_COUNT+1)
+        let FILE_SIZE=($FILE_SIZE+size)
+fi
+done
+
+#REPORT
+echo "TOTAL Files: $BACKUP_COUNT" > "$BACKUP/report.log"
+echo "Total Size: $FILE_SIZE" > "$BACKUP/report.log"
+echo "Backup Completed!!"
