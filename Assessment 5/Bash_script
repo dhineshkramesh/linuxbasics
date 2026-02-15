@@ -1,0 +1,83 @@
+#!/bin/bash
+
+ERROR_LOG="errors.log"
+
+# Help Menu (Here Document)
+if [ "$1" == "--help" ]; then
+cat << EOF
+Usage: $0 -d <directory> -k <keyword>
+       $0 -f <file> -k <keyword>
+
+Options:
+  -d   Directory to search
+  -f   File to search
+  -k   Keyword to search
+EOF
+exit 0
+fi
+
+# getopts
+while getopts "d:f:k:" opt
+do
+    case $opt in
+        d) DIR="$OPTARG" ;;
+        f) FILE="$OPTARG" ;;
+        k) KEY="$OPTARG" ;;
+        *) echo "Invalid option" | tee -a "$ERROR_LOG"
+           exit 1 ;;
+    esac
+done
+
+
+# Special Parameters
+echo "Script name: $0"
+echo "Total arguments: $#"
+echo "All arguments: $@"
+
+# Validate keyword 
+if [[ -z "$KEY" || ! "$KEY" =~ ^[a-zA-Z0-9_]+$ ]]; then
+    echo "Invalid keyword!" | tee -a "$ERROR_LOG"
+    exit 1
+fi
+
+
+# Recursive Function
+search_dir() {
+    for item in "$1"/*
+    do
+        if [ -d "$item" ]; then
+            search_dir "$item"
+        elif [ -f "$item" ]; then
+            grep -q "$KEY" "$item"
+            if [ $? -eq 0 ]; then
+                echo "Found in: $item"
+            fi
+        fi
+    done
+}
+
+# Directory Search
+if [ -n "$DIR" ]; then
+    if [ ! -d "$DIR" ]; then
+        echo "Directory not found!" | tee -a "$ERROR_LOG"
+        exit 1
+    fi
+
+    search_dir "$DIR"
+fi
+
+# File Search (Here String)
+if [ -n "$FILE" ]; then
+    if [ ! -f "$FILE" ]; then
+        echo "File not found!" | tee -a "$ERROR_LOG"
+        exit 1
+    fi
+
+    while read line
+    do
+        grep -q "$KEY" <<< "$line"
+        if [ $? -eq 0 ]; then
+            echo "Match: $line"
+        fi
+    done < "$FILE"
+fi
